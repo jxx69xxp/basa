@@ -2,10 +2,10 @@ import { startTour } from '../lib/guide.js'
 import { $ } from '../app.js'
 
 const steps = [
-  ['Set up your classes', 'Open <b>Setup</b>. Pick a grade, type a section name, press <b>Add section</b>. Do this for each class you teach.', 'setup', 'The Setup page: pick a grade, type a section, press Add section'],
+  ['Set up your classes', 'Open <b>Setup</b>. Tap a grade, type a section name, press <b>Add section</b>. Do this for each class you teach.', 'setup', 'The Setup page: pick a grade, type a section, press Add section'],
   ['Add your students', 'Open <b>Classes</b>, choose a class, press <b>+ Add students</b>. Type each name. To add many at once, paste a list of names. Pick where each student starts, then press <b>Save students</b>.', 'classes', 'The Classes page with the Add students button'],
   ['Choose or make a lesson', 'Open <b>Lessons</b>. Lessons made by Basa are ready to use. To make your own, press <b>+ New lesson</b> and type the words, one per line.', 'lessons', 'The Lessons page with the New lesson button'],
-  ['Let a student read', 'Open <b>Students</b>, find the name, press <b>Read</b>. Press <b>Start reading</b> and let the student read out loud. Allow the microphone if your browser asks. Use Chrome or Edge.', 'students', 'The Student List with a Read button beside each name'],
+  ['Let a student read', 'Open <b>Reading</b>, find the name, press <b>Read</b>. Press <b>Start reading</b> and let the student read out loud. Allow the microphone if your browser asks. Use Chrome or Edge.', 'students', 'The Student List with a Read button beside each name'],
   ['See the result', 'Basa marks each word with a ✓ (right) or ✗ (try again). A student who passes moves up to the next lesson. Press <b>Try again</b> to read again.', 'read', 'The reading page with the Start reading button'],
   ['Check progress', 'Open <b>Dashboard</b> to see the whole class, or open a student to see their scores and the words they missed.', 'dashboard', 'The Dashboard showing how the class is doing'],
 ]
@@ -17,10 +17,13 @@ const faq = [
 ]
 
 export async function render(el) {
-  el.innerHTML = `<div class="row head"><h1>Guide</h1><button id="runTour" class="primary" style="margin-left:auto">Run walkthrough</button></div>
-    <p class="muted">How to use Basa, step by step.</p>
-    <ol class="steps">${steps.map(([t, d, img, alt]) => `<li><b>${t}.</b> ${d}<a href="guide/${img}.png" target="_blank" rel="noopener" title="Open bigger"><img class="shot" src="guide/${img}.png" alt="${alt}" loading="lazy"></a></li>`).join('')}</ol>
-    <h2>Common questions</h2>
-    ${faq.map(([q, a]) => `<details><summary><b>${q}</b></summary><p>${a}</p></details>`).join('')}`
+  el.innerHTML = `<div class="flat"><div class="page-head"><div><span class="tag">Help</span><h1>Guide</h1><p class="muted" style="margin:4px 0 0">How to use Basa, step by step.</p></div>
+      <div class="acts"><button id="runTour" class="primary">Run walkthrough</button></div></div>
+    <ol class="gsteps">${steps.map(([t, d, img, alt], i) => `<li class="card gstep">
+      <div class="gstep-h"><span class="wnum">${i + 1}</span><h2>${t}</h2></div>
+      <p>${d}</p>
+      <a href="guide/${img}.png" target="_blank" rel="noopener" title="Open bigger"><img class="shot" src="guide/${img}.png" alt="${alt}" loading="lazy"></a></li>`).join('')}</ol>
+    <section class="card"><h2>Common questions</h2>
+      ${faq.map(([q, a]) => `<details><summary><b>${q}</b></summary><p>${a}</p></details>`).join('')}</section></div>`
   $('#runTour', el).onclick = startTour
 }

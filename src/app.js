@@ -201,7 +201,8 @@ async function route() {
   // offline, an expired token can't refresh, so getSession returns none; the saved login still counts
   const session = data.session || (!navigator.onLine && hasSavedLogin())
   const u = data.session?.user
-  $('#me span').textContent = u?.user_metadata?.name?.split(/\s+/)[0] || u?.email?.split('@')[0] || 'Profile' // name, else email; "Profile" only offline with no session
+  const who = u?.user_metadata?.name?.trim() || u?.email?.split('@')[0] || 'Profile' // name, else email; "Profile" only offline with no session
+  $('#me b').textContent = who; $('#me .me-av').textContent = who[0].toUpperCase()
   hash === '#/profile' ? $('#me').setAttribute('aria-current', 'page') : $('#me').removeAttribute('aria-current')
   // just signed in: swap the login card for the splash until the first page is ready
   if (session && document.body.classList.contains('signed-out')) el.replaceChildren($('#splash').content.cloneNode(true))

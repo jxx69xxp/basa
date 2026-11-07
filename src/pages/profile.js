@@ -64,7 +64,7 @@ export async function render(el) {
     if (error) return say(error.message, 'bad')
     const file = $('#photo', el).files[0]
     try { if (file) await saveAvatar(user.id, file) } catch (err) { return say(`Saved, but the picture failed: ${err.message}`, 'bad') }
-    $('#me span').textContent = name.split(/\s+/)[0]
+    $('#me b').textContent = name; $('#me .me-av').textContent = name[0].toUpperCase()
     file ? render(el) : say('Saved.', 'ok')
   }
 }
