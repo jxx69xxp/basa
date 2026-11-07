@@ -298,13 +298,13 @@
   .trust span { display:grid; font-size:14px; line-height:20px; color:var(--muted) } .trust b { color:var(--fg); font:700 14px/20px "Plus Jakarta Sans", sans-serif }
   button.cta { min-height:56px; font-size:18px } button.cta:not(:disabled)::after { content:'→'; margin-left:10px }
   .auth-story { display:none; flex-direction:column; gap:24px }
-  .story-hero { position:relative; overflow:hidden; display:grid; gap:20px; padding:32px; border-radius:var(--radius); background:var(--line); box-shadow:var(--shadow) }
+  .story-hero { position:relative; overflow:hidden; display:flex; flex-direction:column; flex:1; gap:20px; padding:32px; border-radius:var(--radius); background:var(--line); box-shadow:var(--shadow) }
   .story-hero::before, .story-hero::after { content:''; position:absolute; border-radius:50%; pointer-events:none }
   .story-hero::before { right:-48px; top:-48px; width:192px; height:192px; background:color-mix(in srgb, var(--primary) 12%, transparent); filter:blur(32px) }
   .story-hero::after { left:-40px; bottom:0; width:144px; height:144px; background:color-mix(in srgb, var(--sun) 22%, transparent); filter:blur(24px) }
   .story-hero > * { position:relative }
   .story-hero h2 { margin:0; font-size:clamp(28px, 3vw, 36px); line-height:1.22 } .story-hero > p { margin:0; color:var(--muted) }
-  .eyebrow { display:inline-flex; align-items:center; gap:6px; justify-self:start; padding:4px 12px; border-radius:999px; background:var(--card); color:var(--primary); box-shadow:var(--shadow); font:700 11px/16px "Plus Jakarta Sans", sans-serif; letter-spacing:.04em; text-transform:uppercase }
+  .eyebrow { display:inline-flex; align-items:center; gap:6px; align-self:flex-start; padding:4px 12px; border-radius:999px; background:var(--card); color:var(--primary); box-shadow:var(--shadow); font:700 11px/16px "Plus Jakarta Sans", sans-serif; letter-spacing:.04em; text-transform:uppercase }
   .eyebrow svg { width:16px; height:16px }
   .preview { display:grid; gap:16px; padding:20px; border-radius:var(--radius); background:var(--card); box-shadow:var(--shadow) }
   .pv-words { display:flex; flex-wrap:wrap; gap:4px 0; margin:0; font:400 26px/1.6 Andika, "Nunito Sans", sans-serif }
@@ -313,12 +313,12 @@
   .pill { flex:none; padding:4px 10px; border-radius:999px; background:var(--line); color:var(--primary); font:700 11px/16px "Plus Jakarta Sans", sans-serif; letter-spacing:.03em; white-space:nowrap }
   .itile { flex:none; display:grid; place-items:center; width:36px; height:36px; border-radius:8px } .itile svg { width:20px; height:20px }
   .itile.mint { background:#6ffbbe; color:#002113 } .itile.sun { background:#feb700; color:#6b4b00 } .itile.sky { background:#dce1ff; color:#001550 } .itile.blue { background:#0043cb; color:#fff }
-  .bento { display:grid; grid-template-columns:1fr 1fr; gap:12px }
+  .bento { display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:auto }
   .bento > div { display:flex; gap:12px; align-items:flex-start; padding:14px; border-radius:8px; background:var(--card); box-shadow:var(--shadow) }
   .bento span:not(.itile) { display:grid; font-size:14px; line-height:20px; color:var(--muted) }
   .bento b { color:var(--fg); font:600 13px/18px "Plus Jakarta Sans", sans-serif }
   .auth-foot { display:flex; flex-wrap:wrap; justify-content:center; gap:4px 12px; margin:32px auto 0; padding:16px; color:var(--muted); font-size:14px } .auth-foot b { color:var(--primary); font-family:"Plus Jakarta Sans", sans-serif }
-  @media (min-width:900px) { .auth-wrap { max-width:1200px; grid-template-columns:minmax(0, 5fr) minmax(0, 7fr); padding:0 24px } .auth-story { display:flex } }
+  @media (min-width:900px) { .auth-wrap { max-width:1200px; grid-template-columns:minmax(0, 5fr) minmax(0, 7fr); align-items:stretch; padding:0 24px } .auth-story { display:flex } }
   @media (max-width:640px) { .auth-wrap { margin:16px auto 0; padding:0 16px } .auth { padding:24px 20px } .bento { grid-template-columns:1fr } }
   .auth form, .auth #extra { display:grid; gap:8px; text-align:left } .auth form label:not(:first-child) { margin-top:8px } .auth form .chips label { margin:0 }
   .auth button { width:100% } .auth #msg { margin:0; font-weight:700; font-size:15px } .auth #msg:empty { display:none } .auth #msg.ok { color:var(--ok) } .auth #msg.bad { color:var(--bad); text-decoration:none }
