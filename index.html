@@ -315,15 +315,10 @@
   .itile.mint { background:#6ffbbe; color:#002113 } .itile.sun { background:#feb700; color:#6b4b00 } .itile.sky { background:#dce1ff; color:#001550 } .itile.blue { background:#0043cb; color:#fff }
   .bento { display:grid; grid-template-columns:1fr 1fr; gap:12px }
   .bento > div { display:flex; gap:12px; align-items:flex-start; padding:14px; border-radius:8px; background:var(--card); box-shadow:var(--shadow) }
-  .bento span:not(.itile), .story-mini span:not(.itile) { display:grid; font-size:14px; line-height:20px; color:var(--muted) }
+  .bento span:not(.itile) { display:grid; font-size:14px; line-height:20px; color:var(--muted) }
   .bento b { color:var(--fg); font:600 13px/18px "Plus Jakarta Sans", sans-serif }
-  .story-card { display:grid; gap:12px; padding:24px; border-radius:var(--radius); background:var(--card); box-shadow:var(--shadow) }
-  .story-card-top { display:flex; align-items:center; justify-content:space-between; gap:12px } .story-card h3 { margin:0; font-size:18px }
-  .steps-mini { display:grid; gap:6px; margin:0; padding-left:22px; color:var(--muted) } .steps-mini li::marker { color:var(--primary); font-weight:800 }
-  .story-mini { display:flex; gap:16px; align-items:center; padding:16px; border-radius:var(--radius); background:linear-gradient(90deg, color-mix(in srgb, var(--primary) 10%, var(--line)), var(--line), var(--hover)) }
-  .story-mini .itile { width:48px; height:48px; border-radius:12px } .story-mini .itile svg { width:26px; height:26px } .story-mini b { color:var(--fg); font:700 15px/20px "Plus Jakarta Sans", sans-serif }
   .auth-foot { display:flex; flex-wrap:wrap; justify-content:center; gap:4px 12px; margin:32px auto 0; padding:16px; color:var(--muted); font-size:14px } .auth-foot b { color:var(--primary); font-family:"Plus Jakarta Sans", sans-serif }
-  @media (min-width:900px) { .auth-wrap { max-width:1200px; grid-template-columns:minmax(0, 5fr) minmax(0, 7fr); padding:0 24px } .auth-story { display:flex } .kids-note { display:none } }
+  @media (min-width:900px) { .auth-wrap { max-width:1200px; grid-template-columns:minmax(0, 5fr) minmax(0, 7fr); padding:0 24px } .auth-story { display:flex } }
   @media (max-width:640px) { .auth-wrap { margin:16px auto 0; padding:0 16px } .auth { padding:24px 20px } .bento { grid-template-columns:1fr } }
   .auth form, .auth #extra { display:grid; gap:8px; text-align:left } .auth form label:not(:first-child) { margin-top:8px } .auth form .chips label { margin:0 }
   .auth button { width:100% } .auth #msg { margin:0; font-weight:700; font-size:15px } .auth #msg:empty { display:none } .auth #msg.ok { color:var(--ok) } .auth #msg.bad { color:var(--bad); text-decoration:none }

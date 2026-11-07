@@ -41,7 +41,7 @@ async function login(el) {
     mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>', lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
     mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/>', layers: '<path d="M12 3 2 8l10 5 10-5zM2 13l10 5 10-5M2 18l10 5 10-5"/>',
     wifi: '<path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0M12 20h.01"/>', shield: '<path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/>',
-    check: '<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>', spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+    check: '<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>',
     login: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>', plus: '<circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>',
   }
   el.innerHTML = `<div class="auth-wrap"><aside class="auth-story" aria-label="About Basa">
@@ -58,11 +58,6 @@ async function login(el) {
           <div><span class="itile sky">${ic(ICON.wifi)}</span><span><b>Works offline</b>Keep reading when the signal drops</span></div>
         </div>
       </div>
-      <div class="story-card">
-        <div class="story-card-top"><h3>How a reading goes</h3><span class="pill">No setup for kids</span></div>
-        <ol class="steps-mini"><li>Pick a student and a lesson.</li><li>The child reads the words aloud.</li><li>Basa marks each word and saves the score. Pass, and they move up a level.</li></ol>
-      </div>
-      <div class="story-mini"><span class="itile blue">${ic(ICON.spark)}</span><span><b>Students don't need an account</b>Open a lesson for them after you sign in.</span></div>
     </aside><section class="auth">
       <div class="auth-head">
         <span class="auth-brand"><svg viewBox="0 0 32 32" aria-hidden="true">${$('.brand svg').innerHTML}</svg>Basa</span><br>
@@ -97,7 +92,6 @@ async function login(el) {
       </form>
       <p id="msg" role="status" aria-live="polite"></p>
       <p class="switch"><span id="ask">New to Basa?</span> <button type="button" class="linkish" id="mode">Create an account</button></p>
-      <p class="muted small kids-note">Students don't need an account. Open a lesson for them after you sign in.</p>
     </section></div>
     <footer class="auth-foot"><b>Basa</b><span>Reading practice for early-grade learners</span></footer>`
   const msg = $('#msg', el)
