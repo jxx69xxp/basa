@@ -2,6 +2,8 @@ import { supabase } from './lib/supabase.js'
 import { startOffline, flush, pending } from './lib/offline.js'
 import { autoTour } from './lib/guide.js'
 import { GRADES } from './lib/levels.js'
+import { strength, LABELS } from './lib/strength.js'
+import { GOOGLE_LOGIN } from '../config.js'
 
 export const esc = s => String(s ?? '').replace(/[&<>"']/g, c => `&#${c.charCodeAt(0)};`)
 export const $ = (sel, el = document) => el.querySelector(sel)
@@ -33,34 +35,74 @@ const routes = [
 
 
 async function login(el) {
-  el.innerHTML = `<section class="auth">
-      <svg class="auth-logo" viewBox="0 0 32 32" aria-hidden="true">${$('.brand svg').innerHTML}</svg>
-      <h1>Welcome, teacher</h1>
-      <p class="muted" id="sub">Sign in to manage your classes and lessons.</p>
+  const ic = d => `<svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg>`
+  const ICON = {
+    person: '<circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/>', group: '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0"/><circle cx="17" cy="9" r="2.5"/><path d="M17 14.5a5 5 0 0 1 4.5 5"/>',
+    mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/>', lock: '<rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V7a4 4 0 0 1 8 0v4"/>',
+    mic: '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/>', layers: '<path d="M12 3 2 8l10 5 10-5zM2 13l10 5 10-5M2 18l10 5 10-5"/>',
+    wifi: '<path d="M2 9a15 15 0 0 1 20 0M5.5 12.5a10 10 0 0 1 13 0M9 16a5 5 0 0 1 6 0M12 20h.01"/>', shield: '<path d="M12 2 4 5v6c0 5 3.4 9.4 8 11 4.6-1.6 8-6 8-11V5z"/><path d="m9 12 2 2 4-4"/>',
+    check: '<circle cx="12" cy="12" r="10"/><path d="m8 12 3 3 5-6"/>', spark: '<path d="M12 3v4M12 17v4M3 12h4M17 12h4M6 6l2.5 2.5M15.5 15.5 18 18M6 18l2.5-2.5M15.5 8.5 18 6"/>',
+    login: '<path d="M15 3h4a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-4M10 17l5-5-5-5M15 12H3"/>', plus: '<circle cx="12" cy="12" r="10"/><path d="M12 8v8M8 12h8"/>',
+  }
+  el.innerHTML = `<div class="auth-wrap"><aside class="auth-story" aria-label="About Basa">
+      <div class="story-hero">
+        <span class="eyebrow">${ic(ICON.check)}For Kinder to Grade 6 teachers</span>
+        <h2>Help every child read with confidence.</h2>
+        <p>Build leveled lessons in English, Tagalog or Bisaya. Kids read aloud, Basa listens and marks each word, and passing readers move up a level.</p>
+        <div class="preview" aria-hidden="true">
+          <p class="pv-words"><span class="w ok">The</span><span class="w ok">cat</span><span class="w ok">sat</span><span class="w bad">on</span><span class="w next">the</span><span class="w">mat.</span></p>
+          <div class="float-chip"><span class="itile mint">${ic(ICON.mic)}</span><span><b>Speech check</b><em>Each word marked as they read</em></span><span class="pill">3 languages</span></div>
+        </div>
+        <div class="bento">
+          <div><span class="itile sun">${ic(ICON.layers)}</span><span><b>Leveled lessons</b>Words, phrases, sentences, stories</span></div>
+          <div><span class="itile sky">${ic(ICON.wifi)}</span><span><b>Works offline</b>Keep reading when the signal drops</span></div>
+        </div>
+      </div>
+      <div class="story-card">
+        <div class="story-card-top"><h3>How a reading goes</h3><span class="pill">No setup for kids</span></div>
+        <ol class="steps-mini"><li>Pick a student and a lesson.</li><li>The child reads the words aloud.</li><li>Basa marks each word and saves the score. Pass, and they move up a level.</li></ol>
+      </div>
+      <div class="story-mini"><span class="itile blue">${ic(ICON.spark)}</span><span><b>Students don't need an account</b>Open a lesson for them after you sign in.</span></div>
+    </aside><section class="auth">
+      <div class="auth-head">
+        <span class="auth-brand"><svg viewBox="0 0 32 32" aria-hidden="true">${$('.brand svg').innerHTML}</svg>Basa</span><br>
+        <span class="kicker">Teacher access</span>
+        <h1>Welcome, teacher</h1>
+        <p class="muted" id="sub">Sign in to manage your classes and lessons.</p>
+      </div>
+      <div class="seg" role="group" aria-label="Log in or create an account">
+        <button type="button" id="tabIn" aria-pressed="true">${ic(ICON.login)}Log in</button>
+        <button type="button" id="tabUp" aria-pressed="false">${ic(ICON.plus)}Create account</button>
+      </div>
+      ${GOOGLE_LOGIN ? `<button type="button" id="google" class="sso"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 0 1-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A11 11 0 0 0 12 23z" fill="#34A853"/><path d="M5.84 14.09a6.6 6.6 0 0 1 0-4.18V7.07H2.18a11 11 0 0 0 0 9.86z" fill="#FBBC05"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15A11 11 0 0 0 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" fill="#EA4335"/></svg>Continue with Google</button>
+      <p class="or"><span>or use your email</span></p>` : ''}
       <form novalidate>
         <div id="extra" hidden>
-          <label for="fname">Your name</label>
-          <input id="fname" autocomplete="name" placeholder="e.g. Maria Santos">
+          <label for="fname"><span>Your name</span><span class="hint">Shown on your profile</span></label>
+          <div class="field">${ic(ICON.person)}<input id="fname" autocomplete="name" placeholder="e.g. Maria Santos"></div>
           <label for="handling">Classes you handle</label>
-          <input id="handling" placeholder="e.g. Sampaguita, Rosal">
-          <label for="advisory">Advisory level</label>
-          <select id="advisory"><option value="">Choose…</option>${[...GRADES, 'No advisory class'].map(g => `<option>${g}</option>`).join('')}</select>
+          <div class="field">${ic(ICON.group)}<input id="handling" placeholder="e.g. Sampaguita, Rosal"></div>
+          <fieldset class="chips"><legend><span>Advisory level</span><span class="hint">Choose one</span></legend>
+            ${[...GRADES, 'No advisory class'].map(g => `<label><input type="radio" name="advisory" value="${g}"><span>${g}</span></label>`).join('')}</fieldset>
         </div>
         <label for="email">Email</label>
-        <input id="email" type="email" autocomplete="email" required placeholder="you@school.edu.ph" aria-describedby="msg">
+        <div class="field">${ic(ICON.mail)}<input id="email" type="email" autocomplete="email" required placeholder="you@school.edu.ph" aria-describedby="msg"></div>
         <label for="pw">Password</label>
-        <div class="pw"><input id="pw" type="password" autocomplete="current-password" required aria-describedby="msg">
+        <div class="pw field">${ic(ICON.lock)}<input id="pw" type="password" autocomplete="current-password" required aria-describedby="msg">
           <button type="button" id="eye" aria-label="Show password" aria-pressed="false"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M2 12s3.6-7 10-7 10 7 10 7-3.6 7-10 7S2 12 2 12z"/><circle cx="12" cy="12" r="3"/><path class="slash" d="M3 3l18 18"/></svg></button></div>
-        <button class="primary">Log in</button>
+        <div class="meter-pw" id="pwMeter" hidden><span class="segs" data-n="0"><i></i><i></i><i></i><i></i></span><span class="small">Password strength: <b id="pwLabel">Too short</b></span></div>
+        <div class="trust">${ic(ICON.shield)}<span><b>Your classes stay private</b>Only you can see your students and their readings.</span></div>
+        <button class="primary cta">Log in</button>
         <button type="button" id="link">Email me a sign-in link instead</button>
       </form>
       <p id="msg" role="status" aria-live="polite"></p>
       <p class="switch"><span id="ask">New to Basa?</span> <button type="button" class="linkish" id="mode">Create an account</button></p>
-      <p class="muted small">Students don't need an account. Open a lesson for them after you sign in.</p>
-    </section>`
+      <p class="muted small kids-note">Students don't need an account. Open a lesson for them after you sign in.</p>
+    </section></div>
+    <footer class="auth-foot"><b>Basa</b><span>Reading practice for early-grade learners</span></footer>`
   const msg = $('#msg', el)
   // msg moves next to whatever it is about, so errors sit under their field
-  const say = (text, kind = '', near = $('#link', el)) => { (near.closest('.pw') || near).after(msg); msg.textContent = text; msg.className = kind }
+  const say = (text, kind = '', near = $('#link', el)) => { (near.closest('.field, .chips') || near).after(msg); msg.textContent = text; msg.className = kind }
   const email = $('#email', el), pw = $('#pw', el)
   $('#eye', el).onclick = e => {
     const show = pw.type === 'password'
@@ -73,9 +115,20 @@ async function login(el) {
   const busy = (btn, label) => { const old = btn.textContent; btn.disabled = true; btn.textContent = label; say(''); return () => { btn.disabled = false; btn.textContent = old } }
   el.querySelectorAll('input').forEach(i => i.oninput = () => { i.removeAttribute('aria-invalid'); say('') })
 
+  const meterSegs = $('#pwMeter .segs', el)
+  pw.addEventListener('input', () => { const n = strength(pw.value); meterSegs.dataset.n = n; $('#pwLabel', el).textContent = LABELS[n] })
+  if (GOOGLE_LOGIN) $('#google', el).onclick = async () => {
+    const { error } = await supabase.auth.signInWithOAuth({ provider: 'google', options: { redirectTo: location.origin + location.pathname } })
+    if (error) say(error.message, 'bad', $('#google', el))
+  }
+
   let signup = false
+  $('#tabIn', el).onclick = () => signup && $('#mode', el).click()
+  $('#tabUp', el).onclick = () => signup || $('#mode', el).click()
   $('#mode', el).onclick = () => {
     signup = !signup
+    $('#tabIn', el).setAttribute('aria-pressed', !signup); $('#tabUp', el).setAttribute('aria-pressed', signup)
+    $('#pwMeter', el).hidden = !signup
     $('h1', el).textContent = signup ? 'Create your account' : 'Welcome, teacher'
     $('form .primary', el).textContent = signup ? 'Create account' : 'Log in'
     $('#sub', el).textContent = signup ? 'Free for teachers. Set up your classes in minutes.' : 'Sign in to manage your classes and lessons.'
@@ -107,7 +160,7 @@ async function login(el) {
     if (signup) {
       if (!$('#fname', el).value.trim()) return bad($('#fname', el), 'Enter your name.')
       if (!$('#handling', el).value.trim()) return bad($('#handling', el), 'Enter the classes you handle.')
-      if (!$('#advisory', el).value) return bad($('#advisory', el), 'Choose your advisory level.')
+      if (!$('[name=advisory]:checked', el)) return bad($('[name=advisory]', el), 'Choose your advisory level.')
     }
     if (!emailOk()) return
     if (!pw.value) return bad(pw, 'Enter your password.')
@@ -115,7 +168,7 @@ async function login(el) {
       if (pw.value.length < 8) return bad(pw, 'Use at least 8 characters.')
       const done = busy($('form .primary', el), 'Creating account…')
       const { data, error } = await supabase.auth.signUp({ email: email.value, password: pw.value, options: { emailRedirectTo: location.origin + location.pathname,
-        data: { name: $('#fname', el).value.trim(), handling: $('#handling', el).value.trim(), advisory: $('#advisory', el).value } } })
+        data: { name: $('#fname', el).value.trim(), handling: $('#handling', el).value.trim(), advisory: $('[name=advisory]:checked', el).value } } })
       done()
       if (error) return /registered/i.test(error.message) ? bad(email, 'This email already has an account. Log in instead.') : say(error.message, 'bad', $('form .primary', el))
       // with email confirmation on there is no session yet; onAuthStateChange routes in when there is
@@ -145,7 +198,10 @@ async function login(el) {
 let seq = 0
 async function route() {
   const el = $('#app'), hash = location.hash || '#/dashboard', mine = ++seq
-  const { data } = await supabase.auth.getSession()
+  // server unreachable (paused project, DNS, firewall): the token refresh retries for minutes, so stop
+  // waiting after 8s and show the login page instead of an endless splash
+  const { data } = await Promise.race([supabase.auth.getSession(),
+    new Promise(r => setTimeout(() => r({ data: { session: null } }), 8000))])
   if (mine !== seq) return
   // offline, an expired token can't refresh, so getSession returns none; the saved login still counts
   const session = data.session || (!navigator.onLine && hasSavedLogin())
@@ -214,4 +270,11 @@ document.addEventListener('click', e => {
 })
 supabase.auth.onAuthStateChange(() => setTimeout(() => { route(); flush() })) // setTimeout: awaiting supabase inside this callback can deadlock; flush: upload saved readings after sign-in
 addEventListener('hashchange', route)
+// top-bar search (wide screens): hands the text to the Student List, which filters by it
+$('#find').onsubmit = e => {
+  e.preventDefault()
+  try { sessionStorage.setItem('find', e.target.q.value.trim()) } catch {}
+  e.target.q.value = ''
+  location.hash === '#/students' ? route() : (location.hash = '#/students')
+}
 $('#fabMenu').onclick = e => e.target.closest('a') && e.currentTarget.hidePopover() // also when the link is the page you are already on

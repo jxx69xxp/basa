@@ -13,7 +13,7 @@ const remembered = () => { try { return localStorage.getItem('dashClass') || '' 
 export async function render(el) {
   const since = Date.now() - 30 * DAY
   const [{ data: sections }, { data: allStudents }, { data: everyAttempt }, { data: lessons }, { data: auth }] = await Promise.all([
-    supabase.from('sections').select('id, name').is('archived_at', null).order('name'),
+    supabase.from('sections').select('id, name, grade, section').is('archived_at', null).order('name'),
     supabase.from('students').select('id, name, level, family_no, section_id').is('archived_at', null).order('name'),
     supabase.from('attempts').select('student_id, score, passed, created_at'),
     supabase.from('lessons').select('id, level, family, family_no').is('archived_at', null).order('created_at', { ascending: false }),
@@ -55,12 +55,26 @@ export async function render(el) {
   const keep = t => t.split(' · ').map(p => `<span class="nw">${esc(p)}</span>`).join(' · ') // wrap only between parts, never inside "CVC -at"
   const lvl = s => s.level >= MAX_LEVEL ? '<b>All levels done</b>' : `<b>${keep(familyLabel(s.family_no, fams))}</b><br><span class="muted">${keep(stageLabel(s.level))}</span>`
 
+  // one card per class (My Classes mockup): students, readings this week, pass rate this week
+  const weekAll = allAttempts.filter(a => Date.parse(a.created_at) > Date.now() - 7 * DAY)
+  const classCard = (s, i) => {
+    const kids = new Set(allStudents.filter(st => st.section_id === s.id).map(st => st.id))
+    const wk = weekAll.filter(a => kids.has(a.student_id)), rate = wk.length ? wk.filter(a => a.passed).length / wk.length : null
+    return `<article class="ccard">
+      <div class="ccard-top v${i % 4}"><span class="tag">${esc(s.grade ?? 'Class')}</span><h3>${esc(s.section ?? s.name)}</h3></div>
+      <div class="ccard-body">
+        <p class="ccard-meta"><span>${kids.size} student${kids.size === 1 ? '' : 's'}</span><span class="tag ${wk.length ? 'ok' : ''}">${wk.length} reading${wk.length === 1 ? '' : 's'} this week</span></p>
+        <div><p class="ccard-meta small"><span>Pass rate this week</span><b>${rate === null ? '—' : pct(rate)}</b></p>
+          <div class="prog ok" aria-hidden="true"><span style="width:${(rate ?? 0) * 100}%"></span></div></div>
+        <a href="#/" data-cls="${s.id}"><button class="primary">Open class</button></a>
+      </div></article>`
+  }
+  const quick = (href, label, sub, d) => `<a class="qtool" href="${href}"><span class="qi"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${d}</svg></span><span><b>${label}</b><span class="muted small">${sub}</span></span><span class="chev" aria-hidden="true">›</span></a>`
+
   const face = await avatarHtml(u, 'avatar sm')
-  el.innerHTML = `<div class="hello">${face}<div><h1>${hello}</h1>
-    <p class="muted">${sections.length ? "Welcome back. Here is how your classes are doing." : 'Welcome to Basa. Start by adding your class in <b>Setup</b>.'}</p></div></div>
-    <div class="row head" style="margin-top:28px">
-      <h2>Class overview</h2>
-      <span class="row" style="margin:0 0 0 auto"><label for="dc">Class</label>
+  el.innerHTML = `<div class="flat"><section class="hero" aria-label="Class overview"><div class="hello">${face}<div><h1>${hello}</h1>
+    <p class="muted">${sections.length ? "Welcome back. Here is how your classes are doing." : 'Welcome to Basa. Start by adding your class in <b>Setup</b>.'}</p></div>
+      <span class="row pick-class"><label for="dc">Class</label>
         <select id="dc"><option value="">All classes</option>${sections.map(s => `<option value="${s.id}" ${s.id === cls ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select></span>
     </div>
 
@@ -69,26 +83,36 @@ export async function render(el) {
       ${tile('Readings this week', week.length)}
       ${tile('Pass rate this week', week.length ? pct(week.filter(a => a.passed).length / week.length) : '—')}
       ${tile('Average score this week', week.length ? pct(avg(week.map(a => a.score))) : '—', `pass mark ${pct(PASS_SCORE)}`)}
-    </div>
+    </div></section>
+
+    ${sections.length ? `<div class="page-head"><div><h2 style="margin:0">Your classes</h2><span class="muted small">Open a class to add students or start a reading.</span></div>
+      <div class="acts"><a href="#/setup"><button class="primary">+ New class</button></a></div></div>
+    <div class="ccards">${sections.map(classCard).join('')}</div>` : ''}
 
     <div class="cols">
-      <section><h2>Needs help</h2><p class="muted small">Below the pass mark, or no reading in 14 days.</p>
+      <section class="card"><h2>Needs help</h2><p class="muted small">Below the pass mark, or no reading in 14 days.</p>
         ${help.length ? `<table><thead><tr><th>Student</th><th>Level</th><th>Avg</th></tr></thead><tbody>
           ${help.map(s => `<tr data-href="#/students/${s.id}"><td>${who(s)}</td><td>${lvl(s)}</td><td>${s.avg === null ? '<span class="muted">no reading</span>' : pct(s.avg)}</td></tr>`).join('')}</tbody></table>`
           : '<p class="muted">Everyone is on track.</p>'}</section>
-      <section><h2>Top students</h2><p class="muted small">At or above the pass mark: highest level first (last 30 days).</p>
+      <section class="card"><h2>Top students</h2><p class="muted small">At or above the pass mark: highest level first (last 30 days).</p>
         ${top.length ? `<table><thead><tr><th>Student</th><th>Level</th><th>Avg</th></tr></thead><tbody>
           ${top.map(s => `<tr data-href="#/students/${s.id}"><td>${who(s)}</td><td>${lvl(s)}</td><td>${pct(s.avg)}</td></tr>`).join('')}</tbody></table>`
           : '<p class="muted">No one at the pass mark yet.</p>'}</section>
     </div>
 
-    <h2>Students per level</h2>
+    <div class="cols cols-2-1"><section class="card"><h2>Students per level</h2>
     <div class="bars" role="table" aria-label="Students per level">
       ${perLevel.map(([label, n]) => `<div class="bar-row" role="row">
         <span role="rowheader">${esc(label)}</span>
         <span class="bar-track" title="${n} student${n === 1 ? '' : 's'}">${n ? `<span class="bar" style="width:${(n / maxLevelCount) * 100}%"></span>` : ''}</span>
         <b role="cell">${n}</b></div>`).join('')}
-    </div>${perLevel.length ? '' : '<p class="muted">No students yet.</p>'}`
+    </div>${perLevel.length ? '' : '<p class="muted">No students yet.</p>'}</section>
+    <section class="card"><h2>Quick actions</h2><div class="qtools">
+      ${quick('#/students', 'Let a student read', 'Pick a student and start a reading', '<rect x="9" y="2" width="6" height="12" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v4"/>')}
+      ${quick('#/', 'Add students', 'Type or paste a list of names', '<circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M19 8v6M16 11h6"/>')}
+      ${quick('#/lessons/new', 'New lesson', 'Words, phrases, sentences or a story', '<path d="M12 6.5C9.5 4.8 6 4.5 3 5.3v13c3-.8 6.5-.5 9 1.2 2.5-1.7 6-2 9-1.2v-13c-3-.8-6.5-.5-9 1.2zM12 6.5v13"/>')}
+    </div></section></div></div>`
 
+  el.querySelectorAll('[data-cls]').forEach(a => a.onclick = () => { try { localStorage.setItem('class', a.dataset.cls) } catch {} })
   $('#dc', el).onchange = e => { try { localStorage.setItem('dashClass', e.target.value) } catch {} render(el) }
 }

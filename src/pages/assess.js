@@ -29,15 +29,22 @@ export async function render(el, [studentId, lessonId]) {
   const stacked = lesson.level < 4
   const lineEnds = new Set() // index of the last word of each item
   items.reduce((n, i) => (n += i.text.split(/\s+/).filter(Boolean).length, lineEnds.add(n - 1), n), 0)
-  el.innerHTML = `<div class="row" style="margin-top:0"><a href="#/"><button>← Back to classes</button></a></div>
-    <p class="muted">${esc(student.name)} · ${esc(studentLabel(student, fams))}</p><h1>${esc(lesson.title)}</h1>
+  const nWords = target.split(/\s+/).filter(Boolean).length
+  el.innerHTML = `<div class="flat"><div class="page-head"><div><span class="tag">Reading check</span><h1>${esc(lesson.title)}</h1></div>
+      <div class="acts"><a href="#/"><button>← Back to classes</button></a></div></div>
+    <div class="stats">
+      <div class="stat"><span class="lbl">Reader</span><span class="who-cell"><span class="ini" aria-hidden="true">${esc(student.name.trim()[0] ?? '?')}</span><b class="sm">${esc(student.name)}</b></span><span class="sub">${esc(studentLabel(student, fams))}</span></div>
+      <div class="stat"><span class="lbl">Words read</span><b id="sRead">0</b><span class="sub">of ${nWords} words</span></div>
+      <div class="stat"><span class="lbl">Pass mark</span><b>${Math.round(need * 100)}%</b><span class="sub">to move up</span></div>
+    </div>
     <section class="stage">
       <div class="stage-top"><p class="hint" id="hint"></p><button class="primary go" id="go">🎤 Start reading</button></div>
       <div class="meter" aria-hidden="true"><span id="bar"></span></div><p class="count" id="count"></p>
       <div class="result" id="result" hidden></div>
       <p class="big${stacked ? ' stack' : ''}" id="text"></p>
+      <p class="legend"><span><i class="k-ok"></i>Read right</span><span><i class="k-bad"></i>Missed</span><span><i class="k-next"></i>Read this next</span></p>
     </section>
-    <div class="row controls"><span id="msg" role="status"></span><button id="hear">🔊 Read the words</button><button class="danger" id="stop" hidden><span class="rec" aria-hidden="true"></span>Stop</button><button id="finish" hidden>✓ Finish &amp; score</button></div>`
+    <div class="row controls"><span id="msg" role="status"></span><button id="hear">🔊 Read the words</button><button class="danger" id="stop" hidden><span class="rec" aria-hidden="true"></span>Stop</button><button id="finish" hidden>✓ Finish &amp; score</button></div></div>`
   const go = $('#go', el), stop = $('#stop', el), msg = $('#msg', el), hear = $('#hear', el), finish = $('#finish', el)
   const hint = $('#hint', el), result = $('#result', el), first = esc(student.name.split(/\s+/)[0])
 
@@ -82,6 +89,7 @@ export async function render(el, [studentId, lessonId]) {
     const done = cls.filter(c => c === 'ok').length, next = cls.indexOf('next')
     $('#bar', el).style.width = `${(done / all.length) * 100}%`
     $('#count', el).textContent = `⭐ ${done} of ${all.length} words`
+    $('#sRead', el).textContent = done
     if (next >= 0) hint.innerHTML = `${done > best ? CHEERS[done % CHEERS.length] + ' ' : ''}Read the yellow word: <b>${esc(all[next])}</b>`
     best = Math.max(best, done)
   }

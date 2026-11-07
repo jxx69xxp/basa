@@ -3,7 +3,7 @@
   "short_name": "Basa",
   "start_url": "./",
   "display": "standalone",
-  "background_color": "#eff6ff",
-  "theme_color": "#2563eb",
+  "background_color": "#f8f9ff",
+  "theme_color": "#0043cb",
   "icons": [{ "src": "logo.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }]
 }

@@ -16,24 +16,27 @@ async function list(el) {
   try { show = sessionStorage.getItem('lessonFilter') ?? '' } catch {}
   // no saved choice: your own lessons first if you have any, else start teachers at built-in Level 1
   if (!show || (show === 'mine' && !mine.length)) show = mine.length ? 'all' : '1'
-  el.innerHTML = `<div class="row head"><h1>Lessons</h1>
-      <button id="newBtn" class="primary" aria-expanded="false" aria-controls="newPanel" style="margin-left:auto">+ New lesson</button></div>
+  el.innerHTML = `<div class="flat"><div class="page-head"><div><span class="tag">Leveled reading</span><h1>Lessons</h1></div>
+      <div class="acts"><button id="newBtn" class="primary" aria-expanded="false" aria-controls="newPanel">+ New lesson</button></div></div>
     <div id="newPanel" class="addbox" hidden>
       <b>Make a new lesson</b>
       <div class="row" style="margin:0"><a href="#/lessons/new"><button>Type the words myself</button></a><span class="muted">or make it from a file:</span></div>
       <div id="drop"></div>
     </div>
-    <div class="row"><label for="lf">Show</label><select id="lf">
+    <div class="row toolbar"><label for="lf">Show</label><select id="lf">
       <option value="mine">My lessons (${mine.length})</option>
       ${Object.keys(fams).map(Number).sort((a, b) => a - b).map(n => `<option value="${n}">${esc(familyLabel(n, fams))}</option>`).join('')}
       <option value="all">All lessons</option></select></div>
-    <div id="lrows"></div>`
-  // one card per level, its stages in order: "Level 1 · -at" → Stage 1 · Words … Stage 4 · Short Story — title
+    <div id="lrows"></div></div>`
+  // one group per level, its stages in order as cards: "Level 1 · -at" → Stage 1 · Words … Stage 4 · Short Story — title
   const name = l => !l.family_no ? esc(l.title) // own lesson: its title is the name
     : l.level === 4 ? `“${esc(l.title)}”` : ''
-  const row = l => `<tr data-href="#/play/${l.id}"><td><b>${stageLabel(l.level)}</b>${name(l) ? `<br><span class="muted">${name(l)}</span>` : ''}</td>
-      <td class="nowrap" style="text-align:right">${l.teacher_id ? `<a href="#/lessons/${l.id}"><button>Edit</button></a> ` : ''}<a href="#/play/${l.id}"><button class="primary">Open</button></a></td></tr>`
-  const group = (title, ls) => `<section class="lvl"><h2>${title}</h2><table><tbody>${ls.map(row).join('')}</tbody></table></section>`
+  const STAGE_TONE = { 1: 'ok', 2: 'warn', 3: '', 4: 'bad' }
+  const card = l => `<article class="lcard">
+      <p class="lcard-tags"><span class="tag ${STAGE_TONE[l.level] ?? ''}">${esc(LEVELS[l.level] ?? 'Lesson')}</span>${l.teacher_id ? '<span class="tag">Mine</span>' : ''}</p>
+      <h3>${stageLabel(l.level)}</h3>${name(l) ? `<p class="muted lcard-title">${name(l)}</p>` : ''}
+      <div class="lcard-acts"><a href="#/play/${l.id}"><button class="primary">Open</button></a>${l.teacher_id ? `<a href="#/lessons/${l.id}"><button>Edit</button></a>` : ''}</div></article>`
+  const group = (title, ls) => `<section class="lvl"><h2>${title} <span class="tag">${ls.length}</span></h2><div class="lcards">${ls.map(card).join('')}</div></section>`
   const draw = () => {
     // "My lessons" with none of your own yet → show the built-in ones instead of nothing
     const fallback = show === 'mine' && !mine.length

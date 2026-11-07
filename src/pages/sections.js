@@ -40,15 +40,20 @@ export async function render(el) {
   const short = (fam, n) => n >= MAX_LEVEL ? 'All done' : `L${fam}${fams[fam] ? ` ${fams[fam]}` : ''} · S${n} ${LEVELS[n]}`
   const others = sections.filter(s => s.id !== cls.id)
 
-  el.innerHTML = `<h1>Classes</h1>
-    <div class="row">
-      <label for="cls">Class</label>
-      <select id="cls">${sections.map(s => `<option value="${s.id}" ${s.id === cls.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select>
-      <span class="row" style="margin:0 0 0 auto">
+  const done = students.filter(st => st.level >= MAX_LEVEL).length
+  el.innerHTML = `<div class="flat"><div class="page-head"><div><span class="tag">Class roster</span><h1>Classes</h1></div>
+      <div class="acts">
+        <select id="cls" aria-label="Class">${sections.map(s => `<option value="${s.id}" ${s.id === cls.id ? 'selected' : ''}>${esc(s.name)}</option>`).join('')}</select>
         <button id="addBtn" class="primary" aria-expanded="false" aria-controls="add">+ Add students</button>
         ${students.length ? '<button id="pickMode" aria-pressed="false">Move students</button>' : ''}
-      </span>
+      </div>
     </div>
+    ${students.length ? `<div class="stats">
+      <div class="stat"><span class="lbl">Students</span><b>${students.length}</b><span class="sub">in ${esc(cls.name)}</span></div>
+      <div class="stat"><span class="lbl">Class overall</span><b>${pct(total)}</b><div class="prog ok" aria-hidden="true"><span style="width:${(total ?? 0) * 100}%"></span></div><span class="sub">average of every reading</span></div>
+      <div class="stat"><span class="lbl">Readings</span><b>${attempts.length}</b><span class="sub">done by this class</span></div>
+      <div class="stat"><span class="lbl">All levels done</span><b>${done}</b><span class="sub">student${done === 1 ? '' : 's'} finished</span></div>
+    </div>` : ''}
 
       <form id="add" class="addbox" novalidate hidden>
         <b>Add students to ${esc(cls.name)}</b>
@@ -60,9 +65,9 @@ export async function render(el) {
     <p id="msg" role="status" aria-live="polite"></p>
 
     ${students.length ? `
-    <div class="print-head"><b>Basa · ${esc(cls.name)}</b> · ${new Date().toLocaleDateString()}</div>
-    <p class="muted">Total students: <b>${students.length}</b> · Class overall score: <b>${pct(total)}</b> from ${attempts.length} reading${attempts.length === 1 ? '' : 's'}</p>
-    <div class="row"><button id="print">Print / Save as PDF</button><button id="csv">Download for Excel</button></div>
+    <section class="card">
+    <div class="print-head"><b>Basa · ${esc(cls.name)}</b> · ${new Date().toLocaleDateString()} · Class overall ${pct(total)} from ${attempts.length} reading${attempts.length === 1 ? '' : 's'}</div>
+    <div class="row card-head" style="margin-top:0"><h2>Student roster</h2><span class="row" style="margin:0 0 0 auto"><button id="print">Print / Save as PDF</button><button id="csv">Download for Excel</button></span></div>
     <div class="row bulk" id="bulk" hidden>
       <b id="count">Tick the students to move</b>
       ${others.length ? `<select id="moveTo" aria-label="Move to class" disabled><option value="">Move to…</option>${others.map(s => `<option value="${s.id}">${esc(s.name)}</option>`).join('')}</select>` : ''}
@@ -75,15 +80,15 @@ export async function render(el) {
       const l = lessonFor(lessons, st), a = scoreAt(st, st.family_no, st.level)
       return `<tr data-stu="${st.id}" data-href="#/students/${st.id}">
         <td class="pick"><input type="checkbox" data-pick aria-label="Select ${esc(st.name)}"></td>
-        <td class="name"><a href="#/students/${st.id}">${esc(st.name)}</a></td>
+        <td class="name"><span class="who-cell"><span class="ini" aria-hidden="true">${esc(st.name.trim()[0] ?? '?')}</span><a href="#/students/${st.id}">${esc(st.name)}</a></span></td>
         <td data-label="Prev level"><span class="muted">${st.prev_level ? short(st.prev_family_no ?? st.family_no, st.prev_level) : '—'}</span> ${st.prev_level ? scoreTag(scoreAt(st, st.prev_family_no ?? st.family_no, st.prev_level)) : ''}</td>
         <td data-label="Level">${st.level >= MAX_LEVEL ? '<b>All levels done</b>' : `<b class="nowrap">${esc(familyLabel(st.family_no, fams))}</b><br><span class="muted nowrap">${stageLabel(st.level)}</span>`}</td>
         <td data-label="Stage score">${scoreTag(a) || '<span class="muted">—</span>'}</td>
-        <td data-label="Overall"><b>${pct(overall(st))}</b></td>
+        <td data-label="Overall"><span class="ov"><b>${pct(overall(st))}</b><span class="prog ok" aria-hidden="true"><span style="width:${(overall(st) ?? 0) * 100}%"></span></span></span></td>
         <td class="act">${l ? `<a href="#/assess/${st.id}/${l.id}"><button class="primary">Read</button></a>`
           : `<span class="muted small nowrap">${st.level < MAX_LEVEL ? 'No lesson yet' : 'Finished'}</span>`}</td></tr>`
     }).join('')}
-    </tbody></table>` : `<p class="muted">No students in ${esc(cls.name)} yet.</p>`}`
+    </tbody></table></section>` : `<p class="muted card">No students in ${esc(cls.name)} yet.</p>`}</div>`
 
   const msg = $('#msg', el)
   const say = (text, kind = '') => { msg.textContent = text; msg.className = kind }

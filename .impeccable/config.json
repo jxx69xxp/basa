@@ -11,6 +11,21 @@
         ],
         "createdAt": "2026-10-17T06:03:00.156Z",
         "reason": "Claude triage: .controls .rec dot only renders inside the Stop button while the microphone is actively recording; genuinely live state, disabled under prefers-reduced-motion"
+      },
+      {
+        "rule": "overused-font",
+        "value": "plus jakarta sans",
+        "createdAt": "2026-11-07T11:19:34.364Z",
+        "reason": "Claude: user chose to restyle Basa to their pasted EduSpark mockup, which specifies Plus Jakarta Sans for headings"
+      },
+      {
+        "rule": "dark-glow",
+        "value": "*",
+        "files": [
+          "index.html"
+        ],
+        "createdAt": "2026-11-07T11:34:10.644Z",
+        "reason": "Claude: only zero-offset shadow in index.html is the pre-existing keyboard focus ring (input/button :focus, var(--ring)); accessibility indicator, not decoration"
       }
     ]
   }
