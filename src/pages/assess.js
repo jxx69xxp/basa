@@ -22,6 +22,8 @@ export async function render(el, [studentId, lessonId]) {
     supabase.from('lesson_items').select('text').eq('lesson_id', lessonId).is('image_path', null).order('position'),
     supabase.from('lessons').select('id, level, family, family_no').is('archived_at', null).order('created_at', { ascending: false }),
   ])
+  // classmates, for the "Next student" button (alphabetical, wraps round; skips anyone with no lesson to read)
+  const { data: mates } = await supabase.from('students').select('id, name, level, family_no').eq('section_id', student.section_id).is('archived_at', null).order('name')
   const fams = familyNames(lessons)
   const need = passFor(await getPassing(), lesson.level, lesson.language)
   const target = items.map(i => i.text).join(' ')
@@ -30,20 +32,34 @@ export async function render(el, [studentId, lessonId]) {
   const lineEnds = new Set() // index of the last word of each item
   items.reduce((n, i) => (n += i.text.split(/\s+/).filter(Boolean).length, lineEnds.add(n - 1), n), 0)
   const nWords = target.split(/\s+/).filter(Boolean).length
+  const list = mates ?? [], me = list.findIndex(m => m.id === student.id)
+  const nextKid = [...list.slice(me + 1), ...list.slice(0, Math.max(me, 0))].find(m => lessonFor(lessons, m))
   el.innerHTML = `<div class="flat"><div class="page-head"><div><span class="tag">Reading check</span><h1>${esc(lesson.title)}</h1></div>
-      <div class="acts"><a href="#/"><button>← Back to classes</button></a></div></div>
-    <div class="stats">
-      <div class="stat"><span class="lbl">Reader</span><span class="who-cell"><span class="ini" aria-hidden="true">${esc(student.name.trim()[0] ?? '?')}</span><b class="sm">${esc(student.name)}</b></span><span class="sub">${esc(studentLabel(student, fams))}</span></div>
-      <div class="stat"><span class="lbl">Words read</span><b id="sRead">0</b><span class="sub">of ${nWords} words</span></div>
-      <div class="stat"><span class="lbl">Pass mark</span><b>${Math.round(need * 100)}%</b><span class="sub">to move up</span></div>
-    </div>
+      <div class="acts"><a href="#/read"><button>← Pick another reader</button></a></div></div>
+    <div class="rlab">
+    <div class="rmain">
     <section class="stage">
       <div class="stage-top"><p class="hint" id="hint"></p><button class="primary go" id="go">🎤 Start reading</button></div>
-      <div class="meter" aria-hidden="true"><span id="bar"></span></div><p class="count" id="count"></p>
       <div class="result" id="result" hidden></div>
       <p class="big${stacked ? ' stack' : ''}" id="text"></p>
       <p class="legend"><span><i class="k-ok"></i>Read right</span><span><i class="k-bad"></i>Missed</span><span><i class="k-next"></i>Read this next</span></p>
     </section>
+    <section class="card rprog"><p class="ccard-meta"><b>Reading progress</b><span class="count" id="count"></span></p>
+      <div class="meter" aria-hidden="true"><span id="bar"></span></div></section>
+    </div>
+    <aside class="rside" aria-label="Reading details">
+      <section class="card rcard"><span class="who-cell"><span class="ini" aria-hidden="true">${esc(student.name.trim()[0] ?? '?')}</span><span><b>${esc(student.name)}</b><br><span class="muted small">${esc(studentLabel(student, fams))}</span></span></span></section>
+      <section class="card rcard"><h2>Live score</h2>
+        <div class="rgrid">
+          <div class="rstat ok"><span class="lbl">Words right</span><b id="sRead">0</b><span class="sub">of ${nWords}</span></div>
+          <div class="rstat"><span class="lbl">Accuracy so far</span><b id="sAcc">—</b><span class="sub">words read right</span></div>
+          <div class="rstat warn"><span class="lbl">Missed</span><b id="sMiss">0</b><span class="sub">so far</span></div>
+          <div class="rstat"><span class="lbl">Pass mark</span><b>${Math.round(need * 100)}%</b><span class="sub">to move up</span></div>
+        </div></section>
+      <section class="card rcard"><h2>Words to practice</h2><div class="miss-list" id="missList"><p class="muted small">Missed words show up here.</p></div></section>
+      ${nextKid ? `<a class="next-kid" href="#/assess/${nextKid.id}/${lessonFor(lessons, nextKid).id}"><span><span class="kicker">Next student</span><b>${esc(nextKid.name)}</b></span><span aria-hidden="true">→</span></a>` : ''}
+    </aside>
+    </div>
     <div class="row controls"><span id="msg" role="status"></span><button id="hear">🔊 Read the words</button><button class="danger" id="stop" hidden><span class="rec" aria-hidden="true"></span>Stop</button><button id="finish" hidden>✓ Finish &amp; score</button></div></div>`
   const go = $('#go', el), stop = $('#stop', el), msg = $('#msg', el), hear = $('#hear', el), finish = $('#finish', el)
   const hint = $('#hint', el), result = $('#result', el), first = esc(student.name.split(/\s+/)[0])
@@ -88,8 +104,13 @@ export async function render(el, [studentId, lessonId]) {
     cls.forEach((c, i) => { if (spans[i].dataset.c !== c) { spans[i].dataset.c = c; spans[i].className = `w ${c}` } })
     const done = cls.filter(c => c === 'ok').length, next = cls.indexOf('next')
     $('#bar', el).style.width = `${(done / all.length) * 100}%`
-    $('#count', el).textContent = `⭐ ${done} of ${all.length} words`
+    $('#count', el).textContent = `⭐ ${done} of ${all.length} words (${Math.round((done / Math.max(all.length, 1)) * 100)}%)`
     $('#sRead', el).textContent = done
+    // live side panel: accuracy over the words reached so far, and the words missed so far
+    const missed = cls.flatMap((c, i) => (c === 'bad' ? [all[i]] : [])), reached = done + missed.length
+    $('#sAcc', el).textContent = reached ? `${Math.round((done / reached) * 100)}%` : '—'
+    $('#sMiss', el).textContent = missed.length
+    $('#missList', el).innerHTML = missed.length ? [...new Set(missed)].map(w => `<span class="chip">${esc(w)}</span>`).join('') : '<p class="muted small">Missed words show up here.</p>'
     if (next >= 0) hint.innerHTML = `${done > best ? CHEERS[done % CHEERS.length] + ' ' : ''}Read the yellow word: <b>${esc(all[next])}</b>`
     best = Math.max(best, done)
   }

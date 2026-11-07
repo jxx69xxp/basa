@@ -23,6 +23,7 @@ const routes = [
   [/^#\/setup$/, () => import('./pages/setup.js')],
   [/^#\/archive$/, () => import('./pages/archive.js')],
   [/^#\/students$/, () => import('./pages/students.js')],
+  [/^#\/read$/, () => import('./pages/students.js')], // Reading: the same list, to pick who reads
   [/^#\/students\/([\w-]+)$/, () => import('./pages/progress.js')],
   [/^#\/dashboard$/, () => import('./pages/dashboard.js')],
   [/^#\/profile$/, () => import('./pages/profile.js')],
@@ -207,7 +208,7 @@ async function route() {
   document.body.classList.toggle('signed-out', !session)
   if (!session) return login(el)
   // highlight the menu item for this page; reading pages belong to their section
-  const page = { assess: '#/', play: '#/lessons', students: '#/students', archive: '#/setup' }[hash.split('/')[1]] || hash.match(/^#\/\w*/)[0]
+  const page = { assess: '#/read', play: '#/lessons', students: '#/students', archive: '#/setup' }[hash.split('/')[1]] || hash.match(/^#\/\w*/)[0]
   document.querySelectorAll('header nav a, .tools a').forEach(a =>
     a.getAttribute('href') === page ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'))
   for (const [re, load] of routes) {
