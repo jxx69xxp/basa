@@ -258,6 +258,19 @@ $('#outDlg').onclose = async () => {
 for (const d of ['#outDlg', '#askDlg']) // tap the dim backdrop to cancel
   $(d).onclick = e => { if (e.target === e.currentTarget) e.currentTarget.close('cancel') }
 startOffline()
+// collapsible sidebar (wide screens): remembered on this device, like the theme
+const root = document.documentElement
+const paintSide = () => {
+  const label = root.dataset.side === 'min' ? 'Expand menu' : 'Collapse menu'
+  $('#sideBtn span').textContent = label; $('#sideBtn').title = label
+}
+$('#sideBtn').onclick = () => {
+  root.dataset.side = root.dataset.side === 'min' ? '' : 'min'
+  try { localStorage.setItem('side', root.dataset.side) } catch {}
+  paintSide()
+}
+paintSide()
+document.querySelectorAll('header nav a, .newcls').forEach(a => (a.title = a.textContent)) // tooltips for the icon-only rail
 // fetch every page's code while idle, so switching pages only waits for data
 globalThis.requestIdleCallback?.(() => routes.forEach(([, load]) => load().catch(() => {})))
 
