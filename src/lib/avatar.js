@@ -15,7 +15,7 @@ const avatarUrl = async path => (await supabase.storage.from('lesson-images').cr
 export async function avatarHtml(user, cls = 'avatar') {
   const m = user?.user_metadata ?? {}
   const pic = m.avatar ? await avatarUrl(m.avatar).catch(() => '') : '' // offline: no URL, initials instead
-  if (pic) return `<img class="${cls}" src="${esc(pic)}" alt="">`
+  if (pic) return `<img class="${cls}" src="${esc(pic)}" alt="" loading="lazy">`
   const words = (m.name?.trim() || user?.email?.split('@')[0] || '?').split(/\s+/)
   const initials = (words[0][0] + (words.length > 1 ? words.at(-1)[0] : '')).toUpperCase()
   return `<span class="${cls}" aria-hidden="true">${esc(initials)}</span>`

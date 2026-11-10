@@ -1,6 +1,6 @@
 import { test, mock } from 'node:test'
 import assert from 'node:assert/strict'
-import { pickVoice, listen, PAUSE_MS } from '../src/lib/speech.js'
+import { pickVoice, listen, PAUSE_MS, synth } from '../src/lib/speech.js'
 const V = [{ lang: 'en-US', name: 'en' }, { lang: 'fil-PH', name: 'fil' }]
 test('exact match', () => assert.deepEqual(pickVoice(V, 'en-US'), { voice: V[0], fallback: false }))
 test('Bisaya falls back to Filipino', () => assert.deepEqual(pickVoice(V, 'ceb-PH'), { voice: V[1], fallback: true }))
@@ -37,4 +37,9 @@ test('listen ends after a long pause once reading started (last word misheard)',
 test('prefers a warm teacher voice within the language', () => {
   const vs = [{ lang: 'en-US', name: 'Microsoft David' }, { lang: 'en-US', name: 'Microsoft Jenny Online (Natural)' }, { lang: 'en-US', name: 'Samantha' }]
   assert.equal(pickVoice(vs, 'en-US').voice.name, 'Microsoft Jenny Online (Natural)')
+})
+
+test('synth: no audio for Tagalog, or English without a Voicebox profile', async () => {
+  assert.equal(await synth('Magandang umaga', 'fil-PH'), null)
+  assert.equal(await synth('Good morning', 'en-US'), null) // VOICEBOX_PROFILE is empty in config.js
 })

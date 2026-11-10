@@ -35,6 +35,16 @@ optimum-cli export onnx --model facebook/mms-tts-ceb mms-tts-ceb-onnx
 
 Then set `CEB_TTS_MODEL = '<you>/mms-tts-ceb-onnx'` in `config.js`. Audio is generated when a Bisaya lesson is saved.
 
+## English voice with Voicebox (optional)
+
+[Voicebox](https://github.com/jamiepine/voicebox) is a free desktop app that clones a voice (e.g. the teacher's). Basa uses it for **English** lessons only; Voicebox has no Tagalog or Bisaya.
+
+1. Install Voicebox on the teacher's computer, create a voice profile, and copy its id (`curl http://127.0.0.1:17493/profiles`).
+2. Set `VOICEBOX_PROFILE = '<id>'` in `config.js`.
+3. For the deployed site, start Voicebox with `VOICEBOX_CORS_ORIGINS=https://<your-site>` (localhost:5173 is already allowed). Chrome may ask to allow local network access; allow it.
+
+Audio is made when an English lesson is saved on a computer with Voicebox running, then stored with the lesson, so every device plays it. If Voicebox is not running, the lesson uses the browser voice.
+
 ## Bisaya mic test (do this first)
 
 Open `spike/bisaya.html` in Chrome on the phone or laptop the class will use. Read 5 Bisaya sentences with **Listen ceb-PH** and 5 with **Listen fil-PH**. In `src/lib/levels.js`:

@@ -1,6 +1,6 @@
 import { supabase } from '../lib/supabase.js'
 import { LEVELS, familyNames, familyLabel, stageLabel, lessonFor } from '../lib/levels.js'
-import { synthCeb } from '../lib/speech.js'
+import { synth } from '../lib/speech.js'
 import { esc, $, ask } from '../app.js'
 
 const LANGS = { 'en-US': 'English', 'fil-PH': 'Tagalog / Filipino', 'ceb-PH': 'Bisaya / Cebuano' }
@@ -191,7 +191,7 @@ async function editor(el, id) {
     if (!draft.items.length) return (msg.textContent = 'Add at least one word, sentence or picture.')
     btn.disabled = true
     try {
-      const newId = await saveLesson(draft, (n, N) => (msg.textContent = `Preparing Bisaya audio ${n}/${N}`))
+      const newId = await saveLesson(draft, (n, N) => (msg.textContent = `Preparing audio ${n}/${N}`))
       location.hash = `#/play/${newId}`
     } catch (err) { msg.textContent = err.message; btn.disabled = false }
   }
@@ -218,15 +218,13 @@ export async function saveLesson({ id, title, level, language, items }, onProgre
   // Old items are removed only after the new ones are safely in, so a failed save never empties a lesson.
   // ponytail: old audio files stay in Storage (clean up if the 1 GB free limit gets close)
   if (id) ok(await supabase.from('lesson_items').delete().eq('lesson_id', id).not('id', 'in', `(${saved.map(i => i.id).join(',')})`))
-  if (language === 'ceb-PH') {
-    for (const [n, it] of saved.entries()) {
-      onProgress(n + 1, saved.length)
-      const blob = await synthCeb(it.text)
-      if (!blob) break // no Bisaya model configured: player falls back to the Filipino voice
-      const audio_path = `${user.id}/audio/${it.id}.wav`
-      ok(await supabase.storage.from('lesson-images').upload(audio_path, blob, { upsert: true }))
-      ok(await supabase.from('lesson_items').update({ audio_path }).eq('id', it.id))
-    }
+  for (const [n, it] of saved.entries()) {
+    onProgress(n + 1, saved.length)
+    const blob = await synth(it.text, language)
+    if (!blob) break // no voice for this language on this computer: player falls back to the browser voice
+    const audio_path = `${user.id}/audio/${it.id}.wav`
+    ok(await supabase.storage.from('lesson-images').upload(audio_path, blob, { upsert: true }))
+    ok(await supabase.from('lesson_items').update({ audio_path }).eq('id', it.id))
   }
   return lesson.id
 }

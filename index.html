@@ -308,6 +308,10 @@
   @keyframes dot { 0%, 70%, 100% { transform:translateY(0); opacity:.45 } 35% { transform:translateY(-12px); opacity:1 } }
   @keyframes float { 50% { transform:translateY(-6px) } }
   @media (prefers-reduced-motion: reduce) { .splash, .splash img { animation:none } .dots i { animation-duration:2.4s; transform:none } }
+  /* page switch: thin bar at the top while the next page loads; the current page stays put */
+  body.busy::before { content:""; position:fixed; inset:0 0 auto; height:3px; z-index:100; background:linear-gradient(90deg, var(--primary), var(--sun), var(--mint)); transform-origin:left; animation:bar 1.5s ease-out forwards }
+  @keyframes bar { from { transform:scaleX(0) } to { transform:scaleX(.9) } }
+  @media (prefers-reduced-motion: reduce) { body.busy::before { animation:none; transform:scaleX(.6) } }
   #list:not(.picking) .pick { display:none } /* tick boxes only while moving students */
   .lvl { margin-top:var(--space-lg) } .lvl h2 { margin:0 0 var(--space-xs); font-size:22px }
   @media (max-width:640px) { .stepper { flex-wrap:nowrap; gap:var(--space-xs) } .stepper li { min-width:0; font-size:12px } .stepper .dot { width:30px; height:30px } }

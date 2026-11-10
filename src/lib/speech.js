@@ -1,5 +1,5 @@
 import { CEB_LISTEN_LANG } from './levels.js'
-import { CEB_TTS_MODEL } from '../../config.js'
+import { CEB_TTS_MODEL, VOICEBOX_PROFILE } from '../../config.js'
 
 const base = l => l.replace('_', '-').toLowerCase().split('-')[0]
 const same = (a, b) => a.replace('_', '-').toLowerCase() === b.toLowerCase()
@@ -142,9 +142,27 @@ export async function recordAndTranscribe(lang, maxMs, signal, onStatus = () => 
   return transcribe()
 }
 
+// Lesson audio as a WAV Blob, or null (the player then uses the browser voice).
+// English → Voicebox app on this computer (it has no Tagalog/Bisaya); Bisaya → MMS in the browser.
+export async function synth(text, lang) {
+  if (base(lang) === 'en') return synthVoicebox(text)
+  if (lang === 'ceb-PH') return synthCeb(text)
+  return null
+}
+
+async function synthVoicebox(text) {
+  if (!VOICEBOX_PROFILE) return null
+  try {
+    const r = await fetch('http://127.0.0.1:17493/generate/stream', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ text, profile_id: VOICEBOX_PROFILE, language: 'en' }),
+    })
+    return r.ok ? await r.blob() : null
+  } catch { return null } // Voicebox not running on this computer
+}
+
 let cebPipeline
-// Bisaya audio as a WAV Blob, generated in the browser. Null when no model is configured.
-export async function synthCeb(text) {
+async function synthCeb(text) {
   if (!CEB_TTS_MODEL) return null
   cebPipeline ??= import('https://cdn.jsdelivr.net/npm/@huggingface/transformers@3')
     .then(({ pipeline }) => pipeline('text-to-speech', CEB_TTS_MODEL))

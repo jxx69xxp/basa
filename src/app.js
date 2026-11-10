@@ -193,6 +193,7 @@ async function login(el) {
 let seq = 0
 async function route() {
   const el = $('#app'), hash = location.hash || '#/dashboard', mine = ++seq
+  document.body.classList.remove('busy') // an older, still-loading page's bar; this route shows its own if slow
   // server unreachable (paused project, DNS, firewall): the token refresh retries for minutes, so stop
   // waiting after 8s and show the login page instead of an endless splash
   const { data } = await Promise.race([supabase.auth.getSession(),
@@ -217,6 +218,7 @@ async function route() {
     if (!m) continue
     // render off-screen, then swap in only if the user hasn't moved on; a slow page can't overwrite a newer one
     const box = document.createElement('div')
+    const bar = setTimeout(() => mine === seq && document.body.classList.add('busy'), 150) // fast pages never show the bar
     try { await (await load()).render(box, m.slice(1)) }
     catch (err) {
       if (navigator.onLine) throw err
@@ -224,6 +226,7 @@ async function route() {
       box.innerHTML = `<h1>Not saved for offline yet</h1><p class="muted">Connect to the internet once, then tap
         <b>Get ready for offline</b> in your Profile.</p><div class="row"><a href="#/profile"><button class="primary">Profile</button></a></div>`
     }
+    finally { clearTimeout(bar); if (mine === seq) document.body.classList.remove('busy') }
     if (mine === seq) { el.replaceChildren(box); autoTour() }
     return
   }
@@ -255,6 +258,8 @@ $('#outDlg').onclose = async () => {
 for (const d of ['#outDlg', '#askDlg']) // tap the dim backdrop to cancel
   $(d).onclick = e => { if (e.target === e.currentTarget) e.currentTarget.close('cancel') }
 startOffline()
+// fetch every page's code while idle, so switching pages only waits for data
+globalThis.requestIdleCallback?.(() => routes.forEach(([, load]) => load().catch(() => {})))
 
 // Clickable list rows: <tr data-href="#/..."> opens on a click anywhere in the row,
 // except on its own controls (dropdowns, buttons, tick boxes, links keep their job).

@@ -24,7 +24,7 @@ export async function render(el, [id]) {
     <div class="row"><button class="primary" id="all">▶ Read all</button>${lesson.teacher_id ? `<a href="#/lessons/${id}"><button>Edit</button></a>` : ''}</div>
     <p id="note" class="note" hidden></p>
     <div class="big${lesson.level < 4 ? ' stack' : ''}">${items.map((it, i) => `<button class="item${it.image_path ? '' : ' txt'}" data-i="${i}" style="border:0;background:none" aria-label="Hear: ${esc(it.text)}">
-      ${it.image_path ? `<img src="${esc(url[it.image_path])}" alt="${esc(it.text)}">` : esc(it.text)}</button>`).join('')}</div>`
+      ${it.image_path ? `<img src="${esc(url[it.image_path])}" alt="${esc(it.text)}" loading="lazy">` : esc(it.text)}</button>`).join('')}</div>`
 
   let audio
   const say = it => new Promise(done => {
